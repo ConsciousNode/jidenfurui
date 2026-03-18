@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自伝 古 — Jiden Furui</title>
+    <style>
+        :root {
+            --bg-base: #0d0a07;
+            --surface: #1a1208;
+            --surface-canvas: #2a1f0e;
+            --text-pri: #c8a96e;
+            --text-sec: #7a6040;
+            --accent: #4a7c6f;
+            --accent-bright: #6db3a3;
+            --lapis: #2a4a8a;
+            --lapis-bright: #4a7abf;
+            --blood: #8a3a2a;
+            --border: #3a2a14;
+            
+            --font-ui: 'Courier New', Courier, monospace;
+            --font-text: Georgia, serif;
+            
+            --trans-slow: 400ms ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            border-radius: 0 !important; /* Ancient things have edges */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-base);
+            color: var(--text-pri);
+            font-family: var(--font-ui);
+            overflow: hidden;
+            letter-spacing: 0.05em;
+        }
+
+        /* Subtle clay/stone noise texture overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.15;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-sec); }
+        ::selection { background: var(--accent); color: var(--text-pri); }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* --- HEADER --- */
+        header {
+            height: 48px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-pri);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo span { font-size: 20px; color: var(--accent); }
+
+        .river-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--text-sec);
+        }
+
+        button, .ancient-select {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-pri);
+            font-family: var(--font-ui);
+            letter-spacing: 0.05em;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: all var(--trans-slow);
+            font-size: 11px;
+            appearance: none;
+        }
+        
+        .ancient-select { padding-right: 24px; position: relative; }
+        .ancient-select:hover, button:hover { border-color: var(--text-sec); }
+        option { background: var(--surface); color: var(--text-pri); }
+
+        /* Custom Dropdown for Rivers */
+        .river-selector { position: relative; }
+        .river-selector-btn {
+            background: transparent; border: 1px solid var(--border); color: var(--text-pri);
+            font-family: var(--font-ui); letter-spacing: 0.05em; padding: 4px 8px; font-size: 11px;
+            cursor: pointer; transition: all var(--trans-slow); display: flex; align-items: center; gap: 8px;
+            min-width: 140px; justify-content: space-between;
+        }
+        .river-selector-btn:hover { border-color: var(--text-sec); }
+        .river-dropdown {
+            position: absolute; top: 100%; right: 0; min-width: 220px;
+            background-color: var(--surface); border: 1px solid var(--border); border-top: none;
+            display: none; flex-direction: column; z-index: 20; max-height: 400px; overflow-y: auto;
+        }
+        .river-selector:hover .river-dropdown { display: flex; }
+        .river-option {
+            padding: 6px 12px; font-size: 11px; cursor: pointer; color: var(--text-sec);
+            display: flex; justify-content: space-between; align-items: center; transition: all var(--trans-slow);
+        }
+        .river-option span:first-child { flex: 1; display: flex; align-items: center; gap: 4px; }
+        .river-option:hover { color: var(--text-pri); background-color: var(--bg-base); }
+        .river-option.active { color: var(--accent); }
+        .river-option-new { border-top: 1px solid var(--border); color: var(--accent); }
+        
+        .unborn-mark { color: var(--accent); font-style: italic; font-size: 0.9em; opacity: 0.8; }
+        .btn-confluence {
+            background: none; border: 1px solid var(--border); color: var(--accent);
+            cursor: pointer; padding: 2px 6px; font-size: 9px; margin-left: 12px; font-family: var(--font-ui);
+        }
+        .btn-confluence:hover { background: var(--accent); color: var(--bg-base); }
+
+        #burden-indicator {
+            color: var(--blood); font-size: 11px; cursor: help; font-weight: bold; display: none;
+        }
+
+        #seal-btn {
+            background: rgba(42, 74, 138, 0.1);
+            border-color: var(--lapis);
+            color: var(--lapis-bright);
+            font-weight: bold;
+        }
+        #seal-btn:hover { background: var(--lapis); color: var(--bg-base); }
+        .seal-pulse { animation: pulse 0.5s ease-out; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(74, 122, 191, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(74, 122, 191, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 122, 191, 0); }
+        }
+
+        /* --- MAIN WORKSPACE --- */
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .panel {
+            flex: 1;
+            height: 100%;
+            position: relative;
+        }
+
+        #tablet-panel {
+            border-right: 1px solid var(--border);
+            background-color: var(--surface);
+            position: relative;
+        }
+
+        #stone-panel { background-color: var(--surface-canvas); }
+
+        /* --- TEXT EDITOR --- */
+        .editor-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto;
+        }
+
+        #editor {
+            padding: 24px;
+            font-family: var(--font-text);
+            font-size: 16px;
+            line-height: 1.6;
+            min-height: 100%;
+            outline: none;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            position: relative; 
+            z-index: 2; 
+            transition: opacity var(--trans-slow), color var(--trans-slow);
+        }
+        
+        #editor:empty::before {
+            content: "The tablet is unmarked. Begin.";
+            color: var(--text-sec);
+            font-style: italic;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Palimpsest Diff Styling */
+        .palimpsest-active #editor {
+            color: var(--text-sec);
+            opacity: 0.9;
+        }
+        .diff-add { color: var(--accent-bright); background-color: rgba(109, 179, 163, 0.15); text-decoration: none; }
+        .diff-del { color: var(--blood); background-color: rgba(138, 58, 42, 0.15); text-decoration: line-through; }
+
+        /* --- DRAWING STONE --- */
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            transition: opacity var(--trans-slow);
+        }
+
+        .tools {
+            position: absolute;
+            top: 12px; right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 5;
+        }
+
+        .tool-btn {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+
+        .tool-btn.active { border-color: var(--accent-bright); color: var(--accent-bright); }
+        
+        #color-indicator {
+            display: block; width: 12px; height: 12px; background: var(--text-pri);
+        }
+
+        /* --- STRATA (TIMELINE) --- */
+        footer {
+            height: 80px;
+            background-color: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .strata-actions {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .strata-actions button { font-size: 10px; padding: 2px 6px; }
+        .strata-actions button.active { background: rgba(109, 179, 163, 0.15); border-color: var(--accent); color: var(--accent-bright); }
+
+        #palimpsest-controls .ancient-select {
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .timeline-line {
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 1px;
+            background: var(--lapis);
+            z-index: 1;
+            transform: translateY(-50%);
+        }
+
+        .seal-nodes {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .seal-node {
+            width: 8px; height: 16px;
+            background: var(--lapis);
+            cursor: pointer;
+            position: relative;
+            transition: all var(--trans-slow);
+        }
+
+        .seal-node:hover { background: var(--lapis-bright); transform: scaleY(1.2); }
+        .seal-node.active { background: var(--lapis-bright); height: 24px; box-shadow: 0 0 8px rgba(74, 122, 191, 0.5); }
+        
+        .seal-node.merge-node {
+            background: var(--accent);
+            transform: rotate(45deg);
+            width: 10px; height: 10px;
+            margin: 0 4px;
+        }
+        .seal-node.merge-node:hover {
+            background: var(--accent-bright);
+            transform: rotate(45deg) scale(1.3);
+        }
+        .seal-node.merge-node.active {
+            background: var(--accent-bright);
+            transform: rotate(45deg) scale(1.5);
+            box-shadow: 0 0 8px rgba(109, 179, 163, 0.5);
+        }
+
+        /* Tooltip */
+        .seal-node::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%; left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            color: var(--text-pri);
+            padding: 4px 8px;
+            font-size: 10px;
+            white-space: pre;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+            width: max-content;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .seal-node:hover::after { opacity: 1; }
+        
+        /* Correct tooltip transform offset for rotated merge nodes */
+        .seal-node.merge-node::after {
+            bottom: auto;
+            top: 50%;
+            left: 50%;
+            transform: rotate(-45deg) translate(-50%, -100%) translateY(-12px);
+            transform-origin: center;
+        }
+
+        .faded { opacity: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- THE STORE -->
+    <script id="jiden-store" type="application/json">
+null
+    </script>
+
+    <div id="app">
+        <header>
+            <div class="logo"><span>𒀭</span> 自伝 古</div>
+            <div class="river-control">
+                <span id="burden-indicator" title="Artifact is growing large. Consider archiving old rivers.">⚠</span>
+                <div class="river-selector" id="river-selector">
+                    <div class="river-selector-btn" id="current-river-btn">
+                        <span>River: 𒆳main</span><span>▾</span>
+                    </div>
+                    <div class="river-dropdown" id="river-dropdown"></div>
+                </div>
+            </div>
+            <button id="seal-btn" title="Each seal is a new artifact. Replace the old one.">⊕ Seal</button>
+        </header>
+
+        <main>
+            <div id="tablet-panel" class="panel">
+                <div class="editor-container">
+                    <div id="editor" contenteditable="true" spellcheck="false"></div>
+                </div>
+            </div>
+            <div id="stone-panel" class="panel">
+                <div class="tools">
+                    <button class="tool-btn active" id="btn-draw" title="Draw">✏️</button>
+                    <button class="tool-btn" id="btn-erase" title="Erase">◻</button>
+                    <button class="tool-btn" id="btn-color" title="Pigment">
+                        <span id="color-indicator"></span>
+                    </button>
+                    <button class="tool-btn" id="btn-width" title="Width">॥</button>
+                    <button class="tool-btn" id="btn-clear" title="Clear Stone">⟳</button>
+                </div>
+                <canvas id="canvas"></canvas>
+            </div>
+        </main>
+
+        <footer>
+            <div class="strata-actions">
+                <button id="btn-palimpsest" title="Compare current with parent">⧖ The Palimpsest</button>
+                <button id="btn-transcribe" title="Export lineage to plain text">▤ Transcribe</button>
+                <div id="palimpsest-controls" style="display:none; align-items:center; gap:6px;">
+                    <span style="font-size:10px; color:var(--text-sec);">comparing:</span>
+                    <select class="ancient-select" id="pal-left" title="Current layer"></select>
+                    <span style="font-size:10px; color:var(--text-sec);">↔</span>
+                    <select class="ancient-select" id="pal-right" title="Ghost layer"></select>
+                </div>
+                <button id="btn-restore" title="Revert unsealed changes">↺ Restore</button>
+                <span style="flex:1"></span>
+                <span id="status-text" style="font-size: 10px; color: var(--text-sec); display: flex; align-items: center;"></span>
+            </div>
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                <div class="seal-nodes" id="seal-nodes-container"></div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // --- VIBE & CONSTANTS ---
+        const COLORS = [
+            '#c8a96e', // Ochre (default)
+            '#4a7c6f', // Verdigris
+            '#2a4a8a', // Lapis
+            '#e8d5b0', // Bone
+            '#8a3a2a'  // Blood
+        ];
+        const WIDTHS = [2, 5, 12];
+
+        // --- STATE ---
+        let store = {
+            version: "1.0",
+            rivers: { "𒆳main": null },
+            currentRiver: "𒆳main",
+            seals: {},
+            HEAD: null
+        };
+
+        // UI State
+        let activeColorIdx = 0;
+        let activeWidthIdx = 0;
+        let currentMode = 'draw'; // 'draw' or 'erase'
+        let palimpsestActive = false;
+        
+        let palimpsestLeftId = null;
+        let palimpsestRightId = null;
+        let workingText = "";
+        let workingStrokes = [];
+        
+        // Canvas State
+        let activeStrokes = [];
+        let currentStroke = null;
+        let isDrawing = false;
+        let lastPos = { x: 0, y: 0 };
+
+        // DOM Elements
+        const editor = document.getElementById('editor');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const currentRiverBtn = document.getElementById('current-river-btn');
+        const riverDropdown = document.getElementById('river-dropdown');
+        const timelineContainer = document.getElementById('seal-nodes-container');
+        const statusText = document.getElementById('status-text');
+        const palimpsestControls = document.getElementById('palimpsest-controls');
+        const burdenIndicator = document.getElementById('burden-indicator');
+
+        // --- INITIALIZATION ---
+        function init() {
+            const rawStore = document.getElementById('jiden-store').textContent.trim();
+            if (rawStore && rawStore !== 'null') {
+                try {
+                    store = JSON.parse(rawStore);
+                    checkBurden(rawStore.length);
+                } catch (e) {
+                    console.error("The tablet is corrupted.", e);
+                    store = {
+                        version: "1.0",
+                        rivers: { "𒆳main": null },
+                        currentRiver: "𒆳main",
+                        seals: {},
+                        HEAD: null
+                    };
+                    setTimeout(() => setStatus("⚠ Prior strata corrupted. Beginning fresh."), 500);
+                }
+            }
+
+            setupCanvas();
+            bindEvents();
+            
+            if (store.HEAD) {
+                checkout(store.HEAD, true);
+            } else {
+                updateUI();
+            }
+        }
+
+        // --- DATA MODEL & ENGINE ---
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+        }
+
+        function checkBurden(size) {
+            if (!size) size = JSON.stringify(store).length;
+            if (size > 500000) {
+                const kb = Math.round(size / 1024);
+                burdenIndicator.textContent = `⚠ ${kb}kb`;
+                burdenIndicator.style.display = 'inline-block';
+            } else {
+                burdenIndicator.style.display = 'none';
+            }
+        }
+
+        function getLineage(headId) {
+            const history = [];
+            let currId = headId;
+            let safety = 1000;
+            while (currId && store.seals[currId] && safety-- > 0) {
+                history.unshift(store.seals[currId]);
+                currId = store.seals[currId].parent;
+            }
+            return history;
+        }
+
+        function createSeal(customMsg = null, mergeParents = null) {
+            const htmlContent = editor.innerHTML;
+            const plainText = editor.innerText || "";
+            let msg = customMsg;
+            if (!msg) {
+                msg = plainText.substring(0, 40).replace(/\n/g, ' ') || "Empty inscription";
+            }
+
+            const newSeal = {
+                id: generateId(),
+                timestamp: Date.now(),
+                message: msg,
+                textContent: htmlContent,
+                strokes: JSON.parse(JSON.stringify(activeStrokes)), // deep copy
+                parent: store.HEAD,
+                river: store.currentRiver
+            };
+            
+            if (mergeParents) {
+                newSeal.merge = true;
+                newSeal.mergeParents = mergeParents;
+            }
+
+            store.seals[newSeal.id] = newSeal;
+            store.HEAD = newSeal.id;
+            store.rivers[store.currentRiver] = newSeal.id;
+
+            return newSeal;
+        }
+
+        function commitAndDownload(customMsg = null, mergeParents = null) {
+            if (palimpsestActive) {
+                setStatus("Deactivate The Palimpsest before sealing.");
+                return;
+            }
+            
+            // Allow explicit merges to proceed, otherwise guard against empty seals
+            const isMerge = Array.isArray(mergeParents);
+            if (!isMerge && store.HEAD && !hasUnsavedChanges()) {
+                setStatus("Nothing new to seal.");
+                return;
+            }
+
+            const btn = document.getElementById('seal-btn');
+            btn.classList.add('seal-pulse');
+            setTimeout(() => btn.classList.remove('seal-pulse'), 500);
+
+            createSeal(customMsg, mergeParents);
+            updateUI();
+            
+            // Prepare file generation with clean DOM manipulation
+            const storeJSON = JSON.stringify(store, null, 2);
+            checkBurden(storeJSON.length);
+            document.getElementById('jiden-store').textContent = '\n' + storeJSON + '\n';
+            
+            // Capture HTML FIRST before touching DOM with anchor
+            let sourceHTML = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+            // THEN create anchor for download
+            const blob = new Blob([sourceHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'jiden-furui.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            setStatus("Artifact sealed.");
+        }
+
+        function checkout(sealId, isInit = false) {
+            if (!sealId || !store.seals[sealId]) return;
+            
+            // Check for unsaved changes if not init
+            if (!isInit && hasUnsavedChanges()) {
+                if (!confirm("Unsealed marks will be lost to time. Proceed?")) return;
+            }
+
+            // Visual fade
+            editor.classList.add('faded');
+            canvas.classList.add('faded');
+
+            setTimeout(() => {
+                store.HEAD = sealId;
+                const seal = store.seals[sealId];
+                
+                editor.innerHTML = seal.textContent;
+                activeStrokes = JSON.parse(JSON.stringify(seal.strokes));
+                
+                palimpsestActive = false; // Turn off diff on checkout
+                palimpsestLeftId = null;
+                palimpsestRightId = null;
+                
+                updateUI();
+                redrawCanvas();
+
+                editor.classList.remove('faded');
+                canvas.classList.remove('faded');
+                setStatus("Restored from strata.");
+            }, 300); // matches var(--trans-slow)
+        }
+
+        function hasUnsavedChanges() {
+            if (!store.HEAD) return editor.innerHTML.trim() !== '' || activeStrokes.length > 0;
+            const headSeal = store.seals[store.HEAD];
+            if (editor.innerHTML !== headSeal.textContent) return true;
+            if (JSON.stringify(activeStrokes) !== JSON.stringify(headSeal.strokes)) return true;
+            return false;
+        }
+        
+        function confluence(otherRiver) {
+            const otherHeadId = store.rivers[otherRiver];
+            if (!otherHeadId || !store.seals[otherHeadId]) return;
+
+            const otherSeal = store.seals[otherHeadId];
+
+            // 1. Text concatenation/override
+            editor.innerHTML = otherSeal.textContent;
+
+            // 2. Stroke concatenation
+            const otherStrokes = JSON.parse(JSON.stringify(otherSeal.strokes || []));
+            activeStrokes = activeStrokes.concat(otherStrokes);
+            redrawCanvas();
+
+            // 3. Seal and branch
+            commitAndDownload(`Confluence with ${otherRiver}`, [store.HEAD, otherHeadId]);
+        }
+
+        function transcribe() {
+            const headId = store.rivers[store.currentRiver];
+            if (!headId) return;
+
+            const lineage = getLineage(headId);
+            let output = `自伝 古 — Lineage Export\nRiver: ${store.currentRiver}\nGenerated: ${new Date().toLocaleString()}\n\n`;
+
+            lineage.forEach((s, idx) => {
+                output += `════════════════════════════════\n`;
+                output += `[${idx + 1}] ${new Date(s.timestamp).toLocaleString()} — "${s.message}"\n`;
+                output += `════════════════════════════════\n`;
+
+                const temp = document.createElement('div');
+                temp.innerHTML = s.textContent;
+                let plainText = temp.innerText || "";
+
+                output += `${plainText.trim()}\n\n\n`;
+            });
+
+            const blob = new Blob([output], { type: "text/plain" });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `jiden-transcribe-${store.currentRiver}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            setStatus("Transcription completed.");
+        }
+
+        // --- PALIMPSEST ENGINE ---
+
+        function populatePalimpsestSelectors() {
+            const leftSel = document.getElementById('pal-left');
+            const rightSel = document.getElementById('pal-right');
+            leftSel.innerHTML = '';
+            rightSel.innerHTML = '';
+
+            const allSeals = Object.values(store.seals).sort((a, b) => a.timestamp - b.timestamp);
+            if (allSeals.length === 0) return;
+
+            allSeals.forEach(seal => {
+                const timeStr = new Date(seal.timestamp).toLocaleTimeString([], {
+                    hour: '2-digit', minute: '2-digit'
+                });
+                const shortMsg = seal.message.length > 20
+                    ? seal.message.substring(0, 20) + '…'
+                    : seal.message;
+                const label = `${timeStr} — "${shortMsg}"`;
+                
+                const optL = document.createElement('option');
+                optL.value = seal.id; optL.textContent = label;
+                leftSel.appendChild(optL);
+
+                const optR = document.createElement('option');
+                optR.value = seal.id; optR.textContent = label;
+                rightSel.appendChild(optR);
+            });
+
+            // Set Defaults
+            palimpsestLeftId = store.HEAD || allSeals[0].id;
+            const headSeal = store.seals[store.HEAD];
+            palimpsestRightId = (headSeal && headSeal.parent) ? headSeal.parent : allSeals[0].id;
+
+            leftSel.value = palimpsestLeftId;
+            rightSel.value = palimpsestRightId;
+
+            if (palimpsestLeftId === palimpsestRightId) {
+                setTimeout(() => setStatus("Only one seal exists. Nothing to compare yet."), 100);
+            }
+        }
+        
+        function simpleDiff(oldHtml, newHtml) {
+            const tempA = document.createElement('div'); tempA.innerHTML = oldHtml || "";
+            const tempB = document.createElement('div'); tempB.innerHTML = newHtml || "";
+
+            const wordsA = (tempA.innerText || "").split(/\s+/).filter(Boolean);
+            const wordsB = (tempB.innerText || "").split(/\s+/).filter(Boolean);
+
+            let resultHTML = "";
+            let i = 0, j = 0;
+
+            while (i < wordsA.length || j < wordsB.length) {
+                if (wordsA[i] === wordsB[j]) {
+                    resultHTML += wordsA[i] + " ";
+                    i++; j++;
+                } else {
+                    let foundInB = wordsB.indexOf(wordsA[i], j);
+                    let foundInA = wordsA.indexOf(wordsB[j], i);
+
+                    if (foundInB !== -1 && (foundInA === -1 || foundInB - j < foundInA - i)) {
+                        while (j < foundInB) {
+                            resultHTML += `<span class="diff-add">${wordsB[j]}</span> `;
+                            j++;
+                        }
+                    } else if (foundInA !== -1) {
+                        while (i < foundInA) {
+                            resultHTML += `<span class="diff-del">${wordsA[i]}</span> `;
+                            i++;
+                        }
+                    } else {
+                        if (i < wordsA.length) resultHTML += `<span class="diff-del">${wordsA[i]}</span> `;
+                        if (j < wordsB.length) resultHTML += `<span class="diff-add">${wordsB[j]}</span> `;
+                        i++; j++;
+                    }
+                }
+            }
+            return resultHTML.replace(/\n/g, '<br>');
+        }
+
+        // --- UI & RENDER ---
+
+        function updateUI() {
+            // River Dropdown population
+            const currentHeadId = store.rivers[store.currentRiver];
+            const currentIsUnborn = currentHeadId && store.seals[currentHeadId] && store.seals[currentHeadId].river !== store.currentRiver;
+            
+            currentRiverBtn.innerHTML = `<span>River: ${store.currentRiver} ${currentIsUnborn ? '<span class="unborn-mark">(unborn)</span>' : ''}</span><span>▾</span>`;
+            riverDropdown.innerHTML = '';
+            
+            for (const r in store.rivers) {
+                const headId = store.rivers[r];
+                const isUnborn = headId && store.seals[headId] && store.seals[headId].river !== r;
+
+                const div = document.createElement('div');
+                div.className = `river-option ${r === store.currentRiver ? 'active' : ''}`;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.innerHTML = `<span>${r}</span> ${isUnborn ? '<span class="unborn-mark">(unborn)</span>' : ''}`;
+                nameSpan.onclick = (e) => {
+                    e.stopPropagation();
+                    if (store.currentRiver !== r) {
+                        store.currentRiver = r;
+                        checkout(store.rivers[r]);
+                    }
+                };
+                div.appendChild(nameSpan);
+
+                if (r !== store.currentRiver) {
+                    const confBtn = document.createElement('button');
+                    confBtn.className = 'btn-confluence';
+                    confBtn.textContent = '⋈ Confluence';
+                    confBtn.title = `Merge ${r} into ${store.currentRiver}`;
+                    confBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if(confirm(`Create confluence with ${r}?\nThis pulls its text and strokes into the current river.`)) {
+                            confluence(r);
+                        }
+                    };
+                    div.appendChild(confBtn);
+                }
+                riverDropdown.appendChild(div);
+            }
+
+            const newRiverOpt = document.createElement('div');
+            newRiverOpt.className = 'river-option river-option-new';
+            newRiverOpt.innerHTML = '<span>⊕ New River</span>';
+            newRiverOpt.onclick = (e) => {
+                e.stopPropagation();
+                const name = prompt("Name the new river:");
+                if (name && name.trim()) {
+                    if (editor.innerHTML.trim() !== '' || activeStrokes.length > 0) {
+                        createSeal();
+                    }
+                    const riverName = "𒆳" + name.trim();
+                    store.rivers[riverName] = store.HEAD;
+                    store.currentRiver = riverName;
+                    updateUI();
+                    setStatus(`Diverged to ${riverName}`);
+                }
+            };
+            riverDropdown.appendChild(newRiverOpt);
+
+            // Tools
+            document.getElementById('color-indicator').style.background = COLORS[activeColorIdx];
+            document.getElementById('btn-draw').classList.toggle('active', currentMode === 'draw');
+            document.getElementById('btn-erase').classList.toggle('active', currentMode === 'erase');
+            document.getElementById('btn-palimpsest').classList.toggle('active', palimpsestActive);
+
+            if (palimpsestActive) {
+                document.body.classList.add('palimpsest-active');
+                palimpsestControls.style.display = 'flex';
+                editor.setAttribute('contenteditable', 'false');
+
+                if (palimpsestLeftId && palimpsestRightId) {
+                    const rightContent = store.seals[palimpsestRightId] ? store.seals[palimpsestRightId].textContent : "";
+                    const leftContent = store.seals[palimpsestLeftId] ? store.seals[palimpsestLeftId].textContent : "";
+                    editor.innerHTML = simpleDiff(rightContent, leftContent);
+                }
+            } else {
+                document.body.classList.remove('palimpsest-active');
+                palimpsestControls.style.display = 'none';
+                editor.setAttribute('contenteditable', 'true');
+            }
+
+            renderTimeline();
+        }
+
+        function renderTimeline() {
+            timelineContainer.innerHTML = '';
+            const history = getLineage(store.rivers[store.currentRiver]);
+
+            if (history.length === 0) {
+                const empty = document.createElement('span');
+                empty.style.cssText = 'font-size:10px; color:var(--text-sec); font-style:italic;';
+                empty.textContent = 'No seals yet. The strata await.';
+                timelineContainer.appendChild(empty);
+                return;
+            }
+
+            history.forEach(seal => {
+                const node = document.createElement('div');
+                node.className = `seal-node ${seal.id === store.HEAD ? 'active' : ''}`;
+                if (seal.merge) node.classList.add('merge-node');
+                
+                const dateStr = new Date(seal.timestamp).toLocaleString();
+                node.setAttribute('data-tooltip', `${dateStr}\n"${seal.message}"`);
+                
+                node.onclick = () => checkout(seal.id);
+                timelineContainer.appendChild(node);
+            });
+            
+            // Scroll to end
+            setTimeout(() => {
+                const scrollable = document.querySelector('.timeline-container');
+                scrollable.scrollLeft = scrollable.scrollWidth;
+            }, 150);
+        }
+
+        function setStatus(msg) {
+            statusText.textContent = msg;
+            setTimeout(() => { if(statusText.textContent === msg) statusText.textContent = ''; }, 3000);
+        }
+
+        // --- CANVAS LOGIC ---
+
+        function setupCanvas() {
+            const resize = () => {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                // Handle high DPI
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.setTransform(1, 0, 0, 1, 0, 0); // Explicitly reset transform before scale
+                ctx.scale(dpr, dpr);
+                canvas.style.width = `${rect.width}px`;
+                canvas.style.height = `${rect.height}px`;
+                redrawCanvas();
+            };
+            window.addEventListener('resize', resize);
+            resize();
+        }
+
+        function getPointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            // Store coordinates as percentages for resolution independence
+            return {
+                x: (clientX - rect.left) / rect.width,
+                y: (clientY - rect.top) / rect.height
+            };
+        }
+
+        function startDrawing(e) {
+            if (palimpsestActive) return; // Disallow drawing during palimpsest diff
+            if (e.button !== 0 && !e.touches) return; // Only left click or touch
+            isDrawing = true;
+            lastPos = getPointerPos(e);
+            currentStroke = {
+                mode: currentMode,
+                color: currentMode === 'erase' ? 'erase' : COLORS[activeColorIdx],
+                width: WIDTHS[activeWidthIdx],
+                points: [lastPos]
+            };
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); // prevent touch scroll
+            const pos = getPointerPos(e);
+            currentStroke.points.push(pos);
+            
+            // Draw just the new segment immediately
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = currentStroke.width;
+            
+            if (currentStroke.mode === 'erase') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = '#000'; // Doesn't matter, erasing
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = currentStroke.color;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(lastPos.x * rect.width, lastPos.y * rect.height);
+            ctx.lineTo(pos.x * rect.width, pos.y * rect.height);
+            ctx.stroke();
+
+            lastPos = pos;
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            if (currentStroke.points.length > 1) {
+                activeStrokes.push(currentStroke);
+            }
+            currentStroke = null;
+            redrawCanvas(); // ensure pristine state
+        }
+
+        function redrawCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            // NOTE: All stroke coordinates are stored as percentages (0-1) of CSS dimensions.
+            // Rendering multiplies by CSS rect (getBoundingClientRect), NOT canvas pixel dimensions.
+            // This is intentional — getPointerPos() also uses CSS rect, keeping the system consistent.
+            // DPI scaling is handled by ctx.scale(dpr, dpr) applied once in setupCanvas().
+
+            // If palimpsest active, draw left and right diff strokes
+            if (palimpsestActive) {
+                const rightSeal = store.seals[palimpsestRightId];
+                if (rightSeal && rightSeal.strokes) {
+                    ctx.globalAlpha = 0.2;
+                    renderStrokesArray(rightSeal.strokes, rect);
+                    ctx.globalAlpha = 1.0;
+                }
+                
+                const leftSeal = store.seals[palimpsestLeftId];
+                if (leftSeal && leftSeal.strokes) {
+                    renderStrokesArray(leftSeal.strokes, rect);
+                }
+            } else {
+                // Draw current live strokes
+                renderStrokesArray(activeStrokes, rect);
+            }
+        }
+
+        function renderStrokesArray(strokes, rect) {
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            strokes.forEach(stroke => {
+                if (stroke.points.length < 2) return;
+                
+                if (stroke.mode === 'erase' || stroke.color === 'erase') {
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.lineWidth = stroke.width * 2; // eraser is thicker
+                    ctx.strokeStyle = '#000';
+                } else {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.lineWidth = stroke.width;
+                    ctx.strokeStyle = stroke.color;
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(stroke.points[0].x * rect.width, stroke.points[0].y * rect.height);
+                for (let i = 1; i < stroke.points.length; i++) {
+                    ctx.lineTo(stroke.points[i].x * rect.width, stroke.points[i].y * rect.height);
+                }
+                ctx.stroke();
+            });
+            ctx.globalCompositeOperation = 'source-over'; // Reset
+        }
+
+        // --- EVENT BINDING ---
+        function bindEvents() {
+            document.getElementById('seal-btn').addEventListener('click', () => commitAndDownload());
+            document.getElementById('btn-transcribe').addEventListener('click', transcribe);
+
+            // Text formatting shortcuts (prevent default HTML madness where possible)
+            editor.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'b') {
+                        e.preventDefault();
+                        document.execCommand('bold');
+                    } else if (e.key === 'i') {
+                        e.preventDefault();
+                        document.execCommand('italic');
+                    } else if (e.key === 's') {
+                        e.preventDefault();
+                        commitAndDownload();
+                    }
+                }
+            });
+
+            // Canvas Tools
+            document.getElementById('btn-draw').addEventListener('click', () => { currentMode = 'draw'; updateUI(); });
+            document.getElementById('btn-erase').addEventListener('click', () => { currentMode = 'erase'; updateUI(); });
+            
+            document.getElementById('btn-color').addEventListener('click', () => {
+                activeColorIdx = (activeColorIdx + 1) % COLORS.length;
+                currentMode = 'draw';
+                updateUI();
+            });
+
+            document.getElementById('btn-width').addEventListener('click', () => {
+                activeWidthIdx = (activeWidthIdx + 1) % WIDTHS.length;
+                const char = activeWidthIdx === 0 ? '।' : (activeWidthIdx === 1 ? '॥' : '川');
+                document.getElementById('btn-width').textContent = char;
+            });
+
+            const btnClear = document.getElementById('btn-clear');
+            let clearTimer;
+            btnClear.addEventListener('click', () => {
+                if (btnClear.textContent === 'Sure?') {
+                    activeStrokes = [];
+                    redrawCanvas();
+                    btnClear.textContent = '⟳';
+                } else {
+                    btnClear.textContent = 'Sure?';
+                    clearTimeout(clearTimer);
+                    clearTimer = setTimeout(() => btnClear.textContent = '⟳', 2000);
+                }
+            });
+
+            // Footer actions (Palimpsest and Restore)
+            document.getElementById('btn-palimpsest').addEventListener('click', () => {
+                if (!palimpsestActive) {
+                    workingText = editor.innerHTML;
+                    workingStrokes = JSON.parse(JSON.stringify(activeStrokes));
+                    palimpsestActive = true;
+                    populatePalimpsestSelectors();
+                } else {
+                    palimpsestActive = false;
+                    editor.innerHTML = workingText;
+                    activeStrokes = workingStrokes;
+                    palimpsestLeftId = null;
+                    palimpsestRightId = null;
+                }
+                updateUI();
+                redrawCanvas();
+            });
+
+            // Palimpsest controls
+            document.getElementById('pal-left').addEventListener('change', (e) => {
+                palimpsestLeftId = e.target.value;
+                updateUI();
+                redrawCanvas();
+            });
+            document.getElementById('pal-right').addEventListener('change', (e) => {
+                palimpsestRightId = e.target.value;
+                updateUI();
+                redrawCanvas();
+            });
+
+            document.getElementById('btn-restore').addEventListener('click', () => {
+                if (hasUnsavedChanges() && confirm("Discard unsealed changes and restore to current HEAD?")) {
+                    checkout(store.HEAD);
+                }
+            });
+
+            // Canvas mouse/touch
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDrawing);
+            
+            canvas.addEventListener('touchstart', startDrawing, {passive: false});
+            canvas.addEventListener('touchmove', draw, {passive: false});
+            window.addEventListener('touchend', stopDrawing);
+        }
+
+        // Run
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
+
+
