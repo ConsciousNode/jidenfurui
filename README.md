@@ -40,7 +40,7 @@ You open the file. You write and draw. When you are ready, you **Seal** — the 
 
 
 
-![Jiden Furui Interface](IMG_20260318_024403.jpg)
+![Jiden Furui Interface](jiden_furui_3-1.png)
 
 
 
