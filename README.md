@@ -19,7 +19,7 @@ Jiden Furui is a `.html` file that is also its own database, its own version con
 There is no server. No account. No cloud. No installation.
 
 You open the file. You write and draw. When you are ready, you **Seal** — the app downloads a new copy of itself with your changes and your entire history baked inside. You keep that file. You work from that file. The document carries its own past.
-![Jiden Furui Interface (IMG_20260318_024403.jpg)
+![Jiden Furui Interface] (IMG_20260318_024403.jpg)
 ---
 
 ## How It Works
